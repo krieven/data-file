@@ -1,12 +1,12 @@
 {
-  "name": "data-store",
+  "name": "krieven-node-store",
   "version": "1.0.0",
   "description": "",
   "main": "./core/store.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ./test/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "keywords": ["database", "key-val", "persistent"],
+  "author": "Vitaly Dmitriev",
+  "license": "MIT"
 }
