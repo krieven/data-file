@@ -141,7 +141,7 @@ module.exports = function (path, pageSize, init, parser) {
             }
             set(key, data[key].value, true);
         });
-        console.log(Object.keys(table).length)
+        console.log(Object.keys(table).length);
 
     }
 
@@ -174,7 +174,11 @@ module.exports = function (path, pageSize, init, parser) {
         if (!index[field] || typeof value === 'object') {
             return;
         }
-        let oldI = (index[field][(deIndex[key] || {})[field]] || []);
+        let oldV = (deIndex[key] || {})[field];
+        if(oldV === value){
+            return;
+        }
+        let oldI = (index[field][oldV] || []);
         let remI = oldI.indexOf(key);
         if (remI >= 0) {
             oldI.splice(remI, 1);
@@ -211,6 +215,9 @@ module.exports = function (path, pageSize, init, parser) {
     function FindResult(keys, store) {
         keys = keys || [];
 
+        this.size = function(){
+            return keys.length;
+        }
         this.getKeys = function () {
             return keys.slice();
         }

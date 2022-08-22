@@ -60,7 +60,7 @@ const ROWS = 100000;
     store.vacuum();
 
     console.time('del');
-    for (let i = 0; i < ROWS - 100; i++) {
+    for (let i = 0; i < ROWS - ROWS/2; i++) {
         store.del('key' + i);
     }
     console.timeEnd('del');
