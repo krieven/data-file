@@ -32,7 +32,7 @@ const ROWS = 100000;
     console.time('get');
     for (let i = 0; i < ROWS; i++) {
         var v = store.get('key' + i);
-        if(!v){
+        if (!v) {
             console.log('empty', 'key' + i);
         }
     }
@@ -53,16 +53,18 @@ const ROWS = 100000;
 
     console.time('set');
     for (let i = 0; i < ROWS; i++) {
-        store.get('key' + i).thirdname='Rapatam-Stratacam-Zerotam ' + i;
+        (store.get('key' + i) || {}).title = 'Rapatam-Stratacam-Zerotam ' + i;
+        store.save('key' + i);
     }
     console.timeEnd('set');
     console.log('rows', ROWS);
+    
     store.vacuum();
 
     console.time('del');
-    for (let i = 0; i < ROWS - ROWS/2; i++) {
+    for (let i = 0; i < ROWS; i += 2) {
         store.del('key' + i);
     }
     console.timeEnd('del');
-    store.vacuum();
+    // store.vacuum();
 })();

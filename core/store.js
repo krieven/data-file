@@ -139,7 +139,7 @@ module.exports = function (path, pageSize, init, parser) {
             if (!data[key] || data[key].value === undefined) {
                 return;
             }
-            set(key, data[key].value, true);
+            set(key, data[key].value);
         });
         console.log(Object.keys(table).length);
 
@@ -175,7 +175,7 @@ module.exports = function (path, pageSize, init, parser) {
             return;
         }
         let oldV = (deIndex[key] || {})[field];
-        if(oldV === value){
+        if (oldV === value) {
             return;
         }
         let oldI = (index[field][oldV] || []);
@@ -205,17 +205,13 @@ module.exports = function (path, pageSize, init, parser) {
             endPos += row.len;
         }
         reindex(key, val);
-        if (sync && !sync.apply) {
-            fs.writeSync(file, buffer, 0, row.len, row.pos);
-            return;
-        }
-        fs.write(file, buffer, 0, row.len, row.pos, sync || EMPTY_FUNC);
+        fs.write(file, buffer, 0, row.len, row.pos, (sync && sync.apply && sync) || EMPTY_FUNC);
     }
 
     function FindResult(keys, store) {
         keys = keys || [];
 
-        this.size = function(){
+        this.size = function () {
             return keys.length;
         }
         this.getKeys = function () {
