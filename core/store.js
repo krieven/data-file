@@ -1,4 +1,5 @@
 "use strict";
+
 const fs = require('fs');
 
 const EMPTY_FUNC = () => undefined;
@@ -11,26 +12,50 @@ const DEFAULT_PARSER = {
 
 module.exports = function (path, pageSize, init, parser) {
     pageSize = (pageSize > 0) ? pageSize : 1024;
-    init = init || EMPTY_FUNC;
+    init = (init && init.apply && init) || EMPTY_FUNC;
     parser = parser || DEFAULT_PARSER;
 
-    const me = this;
+    const store = this;
     const index = {};
     const deIndex = {};
 
     let table;
+    let indexKeys = {};
+    let keys = [];
 
     let file;
     let endPos;
 
-    //public section
-    this.get = function (key) {
-        return !!table[key] && table[key].value;
-    }
-
     let setCount = 0;
     let onAllSetted = EMPTY_FUNC;
-    this.set = function (key, val) {
+
+    let eolBuf = null;
+
+    //public section
+    this.size = function () {
+        buildKeys();
+        return keys.length;
+    }
+
+    this.getKeys = function (unsafe) {
+        buildKeys();
+        return (unsafe && keys) || keys.slice();
+    }
+
+    this.getValues = function () {
+        buildKeys();
+        return keys.map((key) => table[key] && table[key].value);
+    }
+    this.getEntryes = function () {
+        buildKeys();
+        return keys.map((inKey) => ({ key: inKey, value: table[inKey] && table[inKey].value }))
+    }
+
+    this.get = function (key) {
+        return table[key] && table[key].value;
+    }
+
+    this.set = function (key, val, initialyze) {
         setCount++;
         set(key, val, () => {
             setCount--;
@@ -38,10 +63,11 @@ module.exports = function (path, pageSize, init, parser) {
                 onAllSetted();
             }
         });
+        initialyze && init && init(val);
     }
 
     this.save = function (key) {
-        this.set(key, table[key].value);
+        this.set(key, table[key] && table[key].value);
     }
 
     this.del = function (key) {
@@ -61,7 +87,8 @@ module.exports = function (path, pageSize, init, parser) {
 
     this.buildIndex = function (field) {
         index[field] = {};
-        Object.keys(table).forEach((key) => {
+        buildKeys();
+        keys.forEach((key) => {
             if (!table[key].value) {
                 return;
             }
@@ -84,7 +111,6 @@ module.exports = function (path, pageSize, init, parser) {
     }
 
     //private section
-    let eolBuf = null;
     function eol() {
         if (eolBuf === null) {
             eolBuf = Buffer.from(parser.eol());
@@ -132,16 +158,15 @@ module.exports = function (path, pageSize, init, parser) {
         }
         endPos = 0;
         table = {};
+
         fs.ftruncateSync(file, endPos);
 
-        console.log(Object.keys(data).length)
         Object.keys(data).forEach((key) => {
             if (!data[key] || data[key].value === undefined) {
                 return;
             }
             set(key, data[key].value);
         });
-        console.log(Object.keys(table).length);
 
     }
 
@@ -157,17 +182,18 @@ module.exports = function (path, pageSize, init, parser) {
     }
 
     function fullScan(predicate) {
+        buildKeys();
         return new FindResult(
-            Object.keys(table).filter(key => (table[key] && predicate(table[key].value))),
-            me
+            keys.filter(key => (table[key] && predicate(table[key].value))),
+            store
         );
     }
 
     function fastScan(field, value) {
         if (!index[field]) {
-            me.buildIndex(field);
+            store.buildIndex(field);
         }
-        return new FindResult((index[field][value] || []), me);
+        return new FindResult((index[field][value] || []));
     }
 
     function setIndex(key, field, value) {
@@ -197,7 +223,8 @@ module.exports = function (path, pageSize, init, parser) {
     }
 
     function set(key, val, sync) {
-        let row = table[key] ? table[key] : { pos: endPos, len: 0 };
+        if(!key || (!table[key] && val === undefined)) return;
+        let row = table[key] || { pos: endPos, len: 0 };
         row.value = val;
         let buffer = toBuffer({ k: key, v: val }, row.len);
         if (buffer.length > row.len) {
@@ -205,17 +232,27 @@ module.exports = function (path, pageSize, init, parser) {
             endPos += row.len;
         }
         reindex(key, val);
+        keys = [];
+        if(val === undefined){
+            delete indexKeys[key];
+        } else {
+            indexKeys[key] = true;
+        }
         fs.write(file, buffer, 0, row.len, row.pos, (sync && sync.apply && sync) || EMPTY_FUNC);
     }
 
-    function FindResult(keys, store) {
+    function buildKeys(){
+        keys = (keys && keys.length && keys) || Object.keys(indexKeys);
+    }
+
+    function FindResult(keys) {
         keys = keys || [];
 
         this.size = function () {
             return keys.length;
         }
-        this.getKeys = function () {
-            return keys.slice();
+        this.getKeys = function (unsafe) {
+            return (unsafe && keys) || keys.slice();
         }
         this.getValues = function () {
             return keys.map((key) => table[key] && table[key].value);
@@ -224,12 +261,12 @@ module.exports = function (path, pageSize, init, parser) {
             return keys.map((inKey) => ({ key: inKey, value: table[inKey] && table[inKey].value }))
         }
         this.andFind = function (field, value) {
-            let found = store.find(field, value).getKeys();
+            let found = store.find(field, value).getKeys(true);
             let short = found.length < keys.length ? [found, keys] : [keys, found];
-            return new FindResult(short[0].filter((key) => !(short[1].indexOf(key) < 0)), store);
+            return new FindResult(short[0].filter((key) => !(short[1].indexOf(key) < 0)));
         }
         this.andScan = function (predicate) {
-            return new FindResult(keys.filter((key) => (table[key] && predicate(table[key].value))), store);
+            return new FindResult(keys.filter((key) => (table[key] && predicate(table[key].value))));
         }
     }
 

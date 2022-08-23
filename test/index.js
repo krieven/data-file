@@ -12,12 +12,23 @@ const ROWS = 100000;
     store.buildIndex('id');
     console.timeEnd('index id');
 
+    console.time('size');
+    console.log("size", store.size());
+    console.timeEnd('size');
+
     console.time('set');
     for (let i = 0; i < ROWS; i++) {
         store.set('key' + i, { "id": i, "name": "Petya" + (i % 100), "secondname": "Vasya" + (i % 50) });
     }
     console.timeEnd('set');
-    console.log('rows', ROWS);
+
+    console.time('size');
+    console.log("size", store.size());
+    console.timeEnd('size');
+
+    console.time('size');
+    console.log("size", store.size());
+    console.timeEnd('size');
 
     console.time('index name');
     store.buildIndex('name');
@@ -57,7 +68,6 @@ const ROWS = 100000;
         store.save('key' + i);
     }
     console.timeEnd('set');
-    console.log('rows', ROWS);
     
     store.vacuum();
 
@@ -66,5 +76,10 @@ const ROWS = 100000;
         store.del('key' + i);
     }
     console.timeEnd('del');
+
+    console.time('size');
+    console.log("size", store.size());
+    console.timeEnd('size');
+
     // store.vacuum();
 })();
