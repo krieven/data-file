@@ -4,9 +4,19 @@
   "description": "",
   "main": "./core/store.js",
   "scripts": {
-    "test": "node ./test/index.js"
+    "test": "nyc --reporter=html mocha"
   },
-  "keywords": ["database", "key-val", "persistent"],
+  "keywords": [
+    "database",
+    "key-val",
+    "persistent",
+    "fast"
+  ],
   "author": "Vitaly Dmitriev",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0",
+    "sinon": "^14.0.0"
+  }
 }

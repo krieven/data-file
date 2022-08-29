@@ -1,4 +1,4 @@
-const Store = require('../core/store.js')
+const Store = require('./core/store.js')
 
 const ROWS = 100000;
 (function () {
@@ -26,9 +26,9 @@ const ROWS = 100000;
     console.log("size", store.size());
     console.timeEnd('size');
 
-    console.time('size');
+    console.time('size again');
     console.log("size", store.size());
-    console.timeEnd('size');
+    console.timeEnd('size again');
 
     console.time('index name');
     store.buildIndex('name');
