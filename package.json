@@ -1,5 +1,5 @@
 {
-  "name": "krieven-node-store",
+  "name": "krieven-data-file",
   "version": "1.0.0",
   "description": "",
   "main": "./core/store.js",
