@@ -29,7 +29,7 @@ export default class Store<T> {
      * @param val the value
      * @param initialyze determines - will be initialyzer applyed for data before it will be stored
      */
-    put(key: string, val?: T): void;
+    put(key: string, val?: T, initialyze?: boolean): void;
     /**
      * Writes the data that is already setted to the file
      * for example:
